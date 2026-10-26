@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07111d">
+  <meta name="description" content="BioPay pilot console — secure payments, with clear privacy boundaries.">
+  <title>BioPay | Pilot Console</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111d;
+      --bg-soft: #091725;
+      --panel: #0c1b29;
+      --panel-2: #102233;
+      --panel-3: #13293a;
+      --line: rgba(157, 191, 212, .13);
+      --line-strong: rgba(157, 191, 212, .22);
+      --text: #edf5f8;
+      --muted: #91a8b8;
+      --subtle: #60798b;
+      --mint: #61d7c3;
+      --mint-soft: rgba(97, 215, 195, .12);
+      --blue: #7cb5ff;
+      --amber: #edbd6c;
+      --amber-soft: rgba(237, 189, 108, .12);
+      --red: #ff8b8b;
+      --shadow: 0 18px 50px rgba(0, 0, 0, .22);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html { min-width: 320px; background: var(--bg); }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 72% -16%, rgba(44, 125, 139, .16), transparent 38rem),
+        linear-gradient(135deg, #07111d 0%, #081522 56%, #081521 100%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 2px solid var(--mint); outline-offset: 2px;
+    }
+    .app-shell { min-height: 100vh; display: grid; grid-template-columns: 248px minmax(0, 1fr); }
+    .sidebar {
+      position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column;
+      padding: 24px 16px 18px; border-right: 1px solid var(--line);
+      background: rgba(7, 17, 29, .78); backdrop-filter: blur(18px); z-index: 20;
+    }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 2px 10px 28px; color: var(--text); text-decoration: none; }
+    .brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: #062026; background: linear-gradient(145deg, #86eed9, #53cbb8); box-shadow: 0 8px 24px rgba(55, 197, 173, .22); }
+    .brand-mark svg { width: 22px; height: 22px; }
+    .brand-name { font-weight: 750; font-size: 17px; letter-spacing: -.04em; line-height: 1.1; }
+    .brand-sub { display: block; color: var(--subtle); margin-top: 5px; font-size: 9px; font-weight: 700; letter-spacing: .16em; }
+    .nav-label { padding: 5px 12px 10px; font-size: 9px; font-weight: 750; color: var(--subtle); letter-spacing: .16em; }
+    .nav-list { display: grid; gap: 5px; }
+    .nav-item {
+      position: relative; display: flex; width: 100%; align-items: center; gap: 12px; padding: 10px 12px;
+      text-align: left; border: 1px solid transparent; border-radius: 10px; background: transparent;
+      color: var(--muted); cursor: pointer; transition: background .18s ease, color .18s ease, border-color .18s ease;
+    }
+    .nav-item:hover { color: var(--text); background: rgba(255,255,255,.035); }
+    .nav-item[aria-current="page"] { color: #a9eee0; background: var(--mint-soft); border-color: rgba(97, 215, 195, .13); }
+    .nav-item[aria-current="page"]::before { content: ""; position: absolute; left: -17px; top: 10px; bottom: 10px; width: 2px; background: var(--mint); border-radius: 3px; }
+    .nav-icon { display: inline-grid; place-items: center; width: 18px; height: 18px; flex: 0 0 auto; }
+    .nav-icon svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .sidebar-spacer { flex: 1; }
+    .sidebar-status { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.025); }
+    .status-dot { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 4px rgba(237, 189, 108, .1); }
+    .sidebar-status strong { display: block; font-size: 11px; font-weight: 650; }
+    .sidebar-status small { display: block; margin-top: 2px; color: var(--subtle); font-size: 10px; }
+    .sidebar-link { display: flex; align-items: center; gap: 8px; border: 0; padding: 12px 11px 3px; color: var(--muted); background: transparent; font-size: 11px; cursor: pointer; }
+    .sidebar-link:hover { color: var(--mint); }
+    .main-wrap { min-width: 0; display: flex; flex-direction: column; }
+    .topbar {
+      position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 18px;
+      min-height: 70px; padding: 12px clamp(20px, 4vw, 54px); border-bottom: 1px solid var(--line);
+      background: rgba(7, 17, 29, .82); backdrop-filter: blur(18px);
+    }
+    .top-left { display: flex; align-items: center; gap: 13px; min-width: 0; }
+    .menu-button { display: none; width: 36px; height: 36px; place-items: center; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); cursor: pointer; }
+    .menu-button svg { width: 18px; height: 18px; stroke: var(--muted); fill: none; stroke-width: 1.8; }
+    .crumb { color: var(--subtle); font-size: 10px; font-weight: 700; letter-spacing: .1em; white-space: nowrap; }
+    .crumb span { color: var(--text); font-weight: 600; letter-spacing: 0; font-size: 13px; padding-left: 7px; }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .api-pill { display: inline-flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 10px; white-space: nowrap; }
+    .api-pill .status-dot { width: 6px; height: 6px; box-shadow: none; }
+    .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px; padding: 9px 14px; border-radius: 9px; border: 1px solid var(--line-strong); background: rgba(255,255,255,.035); color: var(--text); font-size: 11px; font-weight: 650; text-decoration: none; cursor: pointer; transition: transform .16s ease, background .16s ease, border-color .16s ease; }
+    .button:hover:not(:disabled) { transform: translateY(-1px); border-color: rgba(97, 215, 195, .42); background: rgba(97, 215, 195, .08); }
+    .button:disabled { opacity: .5; cursor: not-allowed; }
+    .button-primary { color: #08221f; border-color: transparent; background: linear-gradient(135deg, #87ecd9, #57cbb8); box-shadow: 0 8px 22px rgba(55, 197, 173, .13); }
+    .button-primary:hover:not(:disabled) { color: #051c1a; background: linear-gradient(135deg, #a1f4e2, #64d9c5); }
+    .button-quiet { border-color: transparent; background: transparent; color: var(--muted); }
+    .button-small { min-height: 32px; padding: 7px 10px; font-size: 10px; }
+    .button svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    main { flex: 1; width: 100%; max-width: 1460px; margin: 0 auto; padding: 36px clamp(20px, 4vw, 54px) 54px; }
+    .site-footer { display: flex; justify-content: space-between; gap: 16px; padding: 16px clamp(20px, 4vw, 54px) 22px; border-top: 1px solid var(--line); color: var(--subtle); font-size: 10px; }
+    .page-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; margin-bottom: 23px; }
+    .eyebrow { margin-bottom: 7px; color: var(--mint); font-size: 9px; font-weight: 750; letter-spacing: .17em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 7px; font-size: clamp(25px, 3vw, 34px); line-height: 1.1; letter-spacing: -.045em; font-weight: 670; }
+    .page-sub { max-width: 680px; margin: 0; color: var(--muted); font-size: 12px; }
+    .date-chip { color: var(--muted); font-size: 10px; white-space: nowrap; }
+    .notice { display: flex; align-items: flex-start; gap: 11px; padding: 13px 15px; margin: 0 0 20px; border: 1px solid rgba(237,189,108,.2); border-radius: 11px; background: var(--amber-soft); color: #f2d4a0; font-size: 11px; }
+    .notice strong { display: block; margin-bottom: 2px; color: #f8dfb4; font-size: 10px; letter-spacing: .08em; }
+    .notice p { margin: 0; color: #c7af89; font-size: 10px; }
+    .notice-icon { display: grid; place-items: center; flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; border: 1px solid rgba(237,189,108,.32); font-weight: 750; font-size: 11px; }
+    .hero { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 198px; padding: clamp(22px, 4vw, 36px); margin-bottom: 19px; border: 1px solid rgba(97,215,195,.16); border-radius: 18px; background: linear-gradient(112deg, rgba(18, 56, 62, .72), rgba(12, 28, 43, .92) 54%, rgba(13, 32, 49, .8)); box-shadow: var(--shadow); }
+    .hero::before { content: ""; position: absolute; width: 310px; height: 310px; right: 4%; top: -208px; border-radius: 50%; border: 1px solid rgba(97,215,195,.16); box-shadow: 0 0 0 28px rgba(97,215,195,.025), 0 0 0 57px rgba(97,215,195,.02); pointer-events: none; }
+    .hero-content { position: relative; z-index: 1; max-width: 650px; }
+    .hero h2 { margin: 0 0 8px; max-width: 600px; font-size: clamp(23px, 3vw, 32px); line-height: 1.16; letter-spacing: -.04em; font-weight: 660; }
+    .hero p { max-width: 570px; margin: 0 0 18px; color: #a9bec8; font-size: 12px; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+    .hero-mark { position: relative; z-index: 1; display: grid; place-items: center; width: 104px; height: 104px; min-width: 104px; border: 1px solid rgba(97,215,195,.23); border-radius: 28px; color: #9cebdc; background: linear-gradient(145deg, rgba(97,215,195,.17), rgba(97,215,195,.025)); transform: rotate(-7deg); }
+    .hero-mark svg { width: 52px; height: 52px; stroke: currentColor; fill: none; stroke-width: 1.2; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+    .metric { min-height: 114px; padding: 16px; border: 1px solid var(--line); border-radius: 13px; background: linear-gradient(150deg, rgba(16,34,51,.9), rgba(11,26,40,.9)); }
+    .metric-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 10px; }
+    .metric-icon { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--line); border-radius: 9px; color: var(--mint); background: rgba(97,215,195,.06); }
+    .metric-icon svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .metric-value { margin-top: 12px; color: #dce9ee; font-size: 24px; font-weight: 650; letter-spacing: -.05em; }
+    .metric-foot { margin-top: 1px; color: var(--subtle); font-size: 9px; }
+    .grid-two { display: grid; grid-template-columns: minmax(0, 1.13fr) minmax(290px, .87fr); gap: 16px; }
+    .panel { min-width: 0; border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(145deg, rgba(13,29,44,.92), rgba(10,23,36,.92)); }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 17px 18px 12px; }
+    .panel-title { margin: 0; font-size: 12px; font-weight: 650; letter-spacing: -.01em; }
+    .panel-kicker { color: var(--subtle); font-size: 9px; }
+    .panel-body { padding: 0 18px 18px; }
+    .readiness-list { display: grid; }
+    .readiness-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 0; border-top: 1px solid var(--line); }
+    .readiness-copy strong { display: block; margin-bottom: 2px; color: #dbe8ee; font-size: 10px; font-weight: 600; }
+    .readiness-copy small { display: block; color: var(--subtle); font-size: 9px; }
+    .tag { display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto; padding: 5px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); background: rgba(255,255,255,.025); font-size: 8px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .tag-warn { color: var(--amber); border-color: rgba(237,189,108,.22); background: rgba(237,189,108,.06); }
+    .tag-good { color: var(--mint); border-color: rgba(97,215,195,.2); background: rgba(97,215,195,.06); }
+    .empty-state { display: grid; place-items: center; min-height: 154px; text-align: center; padding: 20px; border-top: 1px solid var(--line); }
+    .empty-symbol { display: grid; place-items: center; width: 38px; height: 38px; margin-bottom: 10px; border: 1px solid var(--line); border-radius: 12px; color: var(--subtle); background: rgba(255,255,255,.025); }
+    .empty-symbol svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+    .empty-state strong { display: block; margin-bottom: 4px; font-size: 11px; font-weight: 600; }
+    .empty-state p { max-width: 320px; margin: 0; color: var(--subtle); font-size: 9px; }
+    .section-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .feature-card { padding: 19px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(145deg, rgba(16,34,51,.94), rgba(11,26,40,.92)); }
+    .feature-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 13px; }
+    .feature-icon { display: grid; place-items: center; width: 35px; height: 35px; border: 1px solid rgba(97,215,195,.17); border-radius: 11px; color: var(--mint); background: rgba(97,215,195,.07); }
+    .feature-icon svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .feature-card h2 { margin: 0 0 6px; font-size: 13px; font-weight: 650; }
+    .feature-card p { margin: 0 0 15px; color: var(--muted); font-size: 10px; }
+    .feature-card .detail { margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--subtle); font-size: 9px; }
+    .table-wrap { overflow-x: auto; border-top: 1px solid var(--line); }
+    table { width: 100%; border-collapse: collapse; min-width: 640px; }
+    th { padding: 11px 14px; color: var(--subtle); text-align: left; font-size: 8px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+    td { padding: 13px 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
+    .empty-cell { padding: 38px 18px; text-align: center; color: var(--subtle); }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .field { display: grid; gap: 6px; }
+    .field-full { grid-column: 1 / -1; }
+    .field label { color: var(--muted); font-size: 10px; font-weight: 600; }
+    .field input, .field select, .field textarea { width: 100%; min-height: 40px; padding: 9px 11px; border: 1px solid var(--line-strong); border-radius: 9px; background: rgba(5,15,25,.65); color: var(--text); font-size: 11px; }
+    .field textarea { min-height: 70px; resize: vertical; }
+    .field input::placeholder, .field textarea::placeholder { color: #526b7c; }
+    .helper-text { color: var(--subtle); font-size: 9px; }
+    .payment-layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(250px, .9fr); gap: 16px; }
+    .flow-step { display: flex; gap: 11px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .flow-step:last-child { border-bottom: 0; }
+    .step-num { display: grid; place-items: center; flex: 0 0 auto; width: 22px; height: 22px; border-radius: 7px; border: 1px solid var(--line); color: var(--mint); font-size: 9px; font-weight: 750; }
+    .flow-step strong { display: block; color: var(--text); font-size: 10px; font-weight: 600; }
+    .flow-step small { display: block; margin-top: 2px; color: var(--subtle); font-size: 9px; }
+    .security-note { padding: 13px 14px; margin-top: 13px; border: 1px solid rgba(124,181,255,.18); border-radius: 11px; background: rgba(124,181,255,.055); color: #a9c8ed; font-size: 10px; }
+    .check-list { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
+    .check-list li { display: flex; gap: 9px; align-items: flex-start; color: var(--muted); font-size: 10px; }
+    .checkmark { color: var(--mint); font-weight: 800; }
+    .setting-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+    .setting-row:last-child { border-bottom: 0; }
+    .setting-row strong { display: block; margin-bottom: 3px; font-size: 10px; font-weight: 600; }
+    .setting-row p { max-width: 600px; margin: 0; color: var(--subtle); font-size: 9px; }
+    .code-chip { display: inline-block; max-width: 100%; overflow-wrap: anywhere; padding: 5px 8px; border: 1px solid var(--line); border-radius: 7px; color: #b3c8d2; background: rgba(0,0,0,.14); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9px; }
+    .modal-backdrop { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 18px; background: rgba(1,8,14,.77); backdrop-filter: blur(8px); }
+    .modal-backdrop[hidden] { display: none; }
+    .modal { width: min(100%, 520px); padding: 22px; border: 1px solid var(--line-strong); border-radius: 17px; background: #0c1c2b; box-shadow: 0 28px 90px rgba(0,0,0,.5); }
+    .modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 12px; }
+    .modal h2 { margin: 0 0 5px; font-size: 17px; letter-spacing: -.025em; }
+    .modal p { color: var(--muted); font-size: 11px; }
+    .modal-close { width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 18px; }
+    .toast { position: fixed; z-index: 90; right: 22px; bottom: 22px; max-width: min(430px, calc(100vw - 44px)); padding: 12px 15px; border: 1px solid rgba(97,215,195,.26); border-radius: 11px; background: #102638; color: #d6f2eb; box-shadow: var(--shadow); font-size: 11px; opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity .2s ease, transform .2s ease; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .muted { color: var(--muted); }
+    .spacer-16 { height: 16px; }
+    @media (max-width: 1080px) {
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hero-mark { width: 86px; height: 86px; min-width: 86px; }
+    }
+    @media (max-width: 800px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .sidebar { position: fixed; left: 0; top: 0; width: 260px; transform: translateX(-102%); transition: transform .22s ease; box-shadow: 20px 0 50px rgba(0,0,0,.3); }
+      .sidebar.open { transform: translateX(0); }
+      .menu-button { display: grid; }
+      .grid-two, .payment-layout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .topbar { min-height: 62px; padding: 10px 15px; }
+      .top-actions { gap: 6px; }
+      .api-pill { max-width: 140px; overflow: hidden; padding: 6px 8px; font-size: 9px; }
+      .top-actions .button { padding: 7px 9px; font-size: 9px; }
+      main { padding: 25px 15px 38px; }
+      .page-head { align-items: flex-start; flex-direction: column; gap: 7px; }
+      .hero { min-height: 0; padding: 23px 19px; }
+      .hero-mark { display: none; }
+      .metrics { gap: 9px; }
+      .metric { min-height: 102px; padding: 12px; }
+      .metric-value { font-size: 21px; }
+      .section-grid { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .field-full { grid-column: auto; }
+      .site-footer { flex-direction: column; padding: 14px 15px 18px; }
+      .date-chip { white-space: normal; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+      <a class="brand" href="#overview" aria-label="BioPay pilot console home">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.8 20 7v10l-8 4.2L4 17V7l8-4.2Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M7.8 12.2h2.1l1.2-2.6 1.7 5 1.1-2.4h2.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span><span class="brand-name">BioPay</span><span class="brand-sub">PILOT CONSOLE</span></span>
+      </a>
+      <div class="nav-label">WORKSPACE</div>
+      <nav class="nav-list" id="primary-nav" aria-label="Workspace">
+        <button class="nav-item" data-route="overview" aria-current="page"><span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></span>Overview</button>
+        <button class="nav-item" data-route="payments"><span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 9.5h18M7 15h3"/></svg></span>Payments</button>
+        <button class="nav-item" data-route="merchants"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 9.5h16l-1.2-5H5.2L4 9.5Z"/><path d="M5 10v9h14v-9M9 19v-5h6v5M4 9.5c0 1.4 2.2 2.2 3.5.8 1.2 1.4 3.8 1.4 5 0 1.3 1.4 3.8.6 3.8-.8"/></svg></span>Merchants</button>
+        <button class="nav-item" data-route="devices"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m7 7 10 10-5 4V3l5 4L7 17"/><path d="M4 9l4 3-4 3M20 9l-4 3 4 3"/></svg></span>BLE devices</button>
+        <button class="nav-item" data-route="activity"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 19.5V12M10 19.5V5M16 19.5v-9M22 19.5H2"/></svg></span>Activity</button>
+        <button class="nav-item" data-route="security"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 3 20 6v5.5c0 4.3-3 7.4-8 9.5-5-2.1-8-5.2-8-9.5V6l8-3Z"/><path d="m8.7 12.1 2.1 2.1 4.6-4.8"/></svg></span>Security</button>
+        <button class="nav-item" data-route="settings"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></span>Settings</button>
+      </nav>
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-status"><span class="status-dot" aria-hidden="true"></span><span><strong>Preview build</strong><small>Payments and biometrics are off</small></span></div>
+      <button class="sidebar-link" data-action="open-safeguards"><span aria-hidden="true">↗</span> Privacy &amp; security notes</button>
+    </aside>
+
+    <div class="main-wrap">
+      <header class="topbar">
+        <div class="top-left">
+          <button class="menu-button" id="menu-button" aria-label="Open navigation" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+          <div class="crumb">BIOPAY <span aria-hidden="true">/</span><span id="current-section">Overview</span></div>
+        </div>
+        <div class="top-actions">
+          <div class="api-pill" id="api-pill"><span class="status-dot" aria-hidden="true"></span><span id="api-status-text">Backend not connected</span></div>
+          <button class="button button-small" data-action="check-api"><svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9a7 7 0 0 1 11.6-2L20 12M4 12l2.9 5a7 7 0 0 0 11.6-2"/></svg>Check API</button>
+        </div>
+      </header>
+
+      <main id="main-content" tabindex="-1"></main>
+      <footer class="site-footer"><span>BioPay pilot workspace · Interface preview</span><span>No payment processing or biometric capture is active in this build.</span></footer>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modal-backdrop" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-description">
+      <div class="modal-head"><div><div class="eyebrow">Privacy first</div><h2 id="modal-title">Camera research safeguards</h2></div><button class="modal-close" data-action="close-modal" aria-label="Close dialog">×</button></div>
+      <div id="modal-description">
+        <p>This preview does not request camera access, collect consent, or generate biometric readings. The camera feature is deliberately inactive.</p>
+        <ul class="check-list">
+          <li><span class="checkmark">✓</span><span>Passkeys use the phone’s built-in authenticator. The fingerprint image or template is not shared with BioPay.</span></li>
+          <li><span class="checkmark">✓</span><span>Any future rPPG or eye-measurement study must be separately opt-in, clearly explained, and independently validated.</span></li>
+          <li><span class="checkmark">✓</span><span>Camera-derived research measurements must not approve, deny, or price a payment.</span></li>
+          <li><span class="checkmark">✓</span><span>Consent, retention, access, deletion, and incident-response rules need a server-side record and formal review before a real pilot.</span></li>
+        </ul>
+        <div class="security-note">No real consent record is created by this dialog. It is explanatory UI only.</div>
+      </div>
+      <div class="modal-actions"><button class="button" data-action="close-modal">Close</button><button class="button button-primary" data-action="go-security">Open security page</button></div>
+    </section>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    // Public configuration only. Never put payment-provider secrets or private keys here.
+    // The Supabase project URL is public; no Supabase key or client is enabled in this preview.
+    const BIOPAY_CONFIG = Object.freeze({
+      apiBaseUrl: "",
+      supabaseUrl: "https://srtaysgfnopjcuosebbb.supabase.co"
+    });
+
+    const main = document.getElementById("main-content");
+    const sidebar = document.getElementById("sidebar");
+    const menuButton = document.getElementById("menu-button");
+    const toastEl = document.getElementById("toast");
+    const apiPill = document.getElementById("api-pill");
+    const apiStatusText = document.getElementById("api-status-text");
+    const modalBackdrop = document.getElementById("modal-backdrop");
+    const allowedRoutes = new Set(["overview", "payments", "merchants", "devices", "activity", "security", "settings"]);
+    let toastTimer;
+
+    const icons = {
+      wallet: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 9.5h18M16 14h2"/></svg>',
+      pulse: '<svg viewBox="0 0 24 24"><path d="M3 12h4l2.3-5.2L14 18l2.5-6H21"/></svg>',
+      store: '<svg viewBox="0 0 24 24"><path d="M4 9.5h16l-1.2-5H5.2L4 9.5Z"/><path d="M5 10v9h14v-9M9 19v-5h6v5"/></svg>',
+      bluetooth: '<svg viewBox="0 0 24 24"><path d="m7 7 10 10-5 4V3l5 4L7 17"/><path d="M4 9l4 3-4 3M20 9l-4 3 4 3"/></svg>',
+      key: '<svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8 2 2-2 2 2 2-3 3-2-2-2 2"/></svg>',
+      shield: '<svg viewBox="0 0 24 24"><path d="M12 3 20 6v5.5c0 4.3-3 7.4-8 9.5-5-2.1-8-5.2-8-9.5V6l8-3Z"/><path d="m8.7 12.1 2.1 2.1 4.6-4.8"/></svg>',
+      activity: '<svg viewBox="0 0 24 24"><path d="M4 19.5V12M10 19.5V5M16 19.5v-9M22 19.5H2"/></svg>',
+      empty: '<svg viewBox="0 0 24 24"><path d="M4 5.5h16v13H4zM8 9h8M8 12h5"/></svg>',
+      arrow: '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+      shieldMini: '<svg viewBox="0 0 24 24"><path d="M12 3 20 6v5.5c0 4.3-3 7.4-8 9.5-5-2.1-8-5.2-8-9.5V6l8-3Z"/></svg>'
+    };
+
+    const intro = (eyebrow, title, subtitle, extra = "") => `
+      <div class="page-head"><div><div class="eyebrow">${eyebrow}</div><h1>${title}</h1><p class="page-sub">${subtitle}</p></div>${extra}</div>`;
+
+    const emptyState = (title, copy) => `
+      <div class="empty-state"><div><span class="empty-symbol">${icons.empty}</span><strong>${title}</strong><p>${copy}</p></div></div>`;
+
+    const views = {
+      overview: () => `
+        ${intro("Pilot workspace", "Your payments, in one place.", "A clean starting point for the BioPay pilot. Connect a trusted API before enabling accounts, biometric features, or money movement.", `<div class="date-chip" id="kampala-date"></div>`)}
+        <div class="notice"><span class="notice-icon" aria-hidden="true">!</span><div><strong>SAFE PREVIEW · NO LIVE DATA</strong><p>No account balances, transactions, passkeys, camera capture, or payment-provider calls are active in this build.</p></div></div>
+        <section class="hero"><div class="hero-content"><div class="eyebrow">Built for a controlled pilot</div><h2>Trust should be visible at every step.</h2><p>Start with clear payment flows, device-bound passkeys, and explicit privacy boundaries. Live services remain off until a secure backend and provider sandbox are configured.</p><div class="hero-actions"><button class="button button-primary" data-route="security">Review security model ${icons.arrow}</button><button class="button" data-route="settings">Configure connection</button></div></div><div class="hero-mark" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M24 4.5 41 13v21L24 43.5 7 34V13L24 4.5Z"/><path d="M12 24h7l3-7 5.5 15 3.3-8H37" stroke-linecap="round" stroke-linejoin="round"/></svg></div></section>
+        <section class="metrics" aria-label="Pilot metrics">
+          <article class="metric"><div class="metric-top"><span>Available balance</span><span class="metric-icon">${icons.wallet}</span></div><div class="metric-value">— <small style="font-size:12px;color:var(--muted);font-weight:550">UGX</small></div><div class="metric-foot">Waiting for secure account API</div></article>
+          <article class="metric"><div class="metric-top"><span>Payments today</span><span class="metric-icon">${icons.activity}</span></div><div class="metric-value">—</div><div class="metric-foot">No live transaction data</div></article>
+          <article class="metric"><div class="metric-top"><span>Connected merchants</span><span class="metric-icon">${icons.store}</span></div><div class="metric-value">—</div><div class="metric-foot">Merchant API not connected</div></article>
+          <article class="metric"><div class="metric-top"><span>Passkeys enrolled</span><span class="metric-icon">${icons.key}</span></div><div class="metric-value">—</div><div class="metric-foot">WebAuthn backend required</div></article>
+        </section>
+        <section class="grid-two">
+          <article class="panel"><div class="panel-head"><div><h2 class="panel-title">Pilot readiness</h2><span class="panel-kicker">Current integration status</span></div><span class="tag tag-warn">Setup needed</span></div><div class="panel-body readiness-list">
+            <div class="readiness-row"><div class="readiness-copy"><strong>Frontend hosting</strong><small>Static interface prepared for Vercel</small></div><span class="tag tag-good">Ready</span></div>
+            <div class="readiness-row"><div class="readiness-copy"><strong>Secure API</strong><small>Required for accounts, credentials, audit trail, and payment logic</small></div><span class="tag tag-warn">Not connected</span></div>
+            <div class="readiness-row"><div class="readiness-copy"><strong>Payment provider</strong><small>Start in provider sandbox; keep secrets on the server</small></div><span class="tag">Not configured</span></div>
+            <div class="readiness-row"><div class="readiness-copy"><strong>BLE device registry</strong><small>Scanning off; newest discovery will sort to the top</small></div><span class="tag">Not connected</span></div>
+            <div class="readiness-row"><div class="readiness-copy"><strong>Camera research</strong><small>Optional, separate consent, never used to approve payments</small></div><span class="tag">Off</span></div>
+          </div></article>
+          <article class="panel"><div class="panel-head"><div><h2 class="panel-title">Recent activity</h2><span class="panel-kicker">Live data will appear after API setup</span></div><button class="button button-quiet button-small" data-route="activity">View all ${icons.arrow}</button></div>${emptyState("Nothing to show yet", "This preview does not include generated or sample transactions. Connect the backend to load real, authorized records.")}</article>
+        </section>`,
+
+      payments: () => `
+        ${intro("Money movement", "Payments", "A payment interface is prepared, but this preview cannot initiate or settle transactions.")}
+        <div class="notice"><span class="notice-icon" aria-hidden="true">!</span><div><strong>PAYMENTS ARE DISABLED</strong><p>The current build is a static UI; real payment requests, provider secrets, verification, and ledger updates require trusted server-side functions.</p></div></div>
+        <section class="payment-layout">
+          <article class="panel"><div class="panel-head"><div><h2 class="panel-title">Create a payment</h2><span class="panel-kicker">No information is sent from this preview</span></div><span class="tag tag-warn">Offline</span></div><div class="panel-body"><form id="payment-form"><div class="form-grid">
+            <div class="field"><label for="merchant-id">Merchant ID</label><input id="merchant-id" name="merchant" placeholder="Connect API to load merchants" autocomplete="off"></div>
+            <div class="field"><label for="amount">Amount (UGX)</label><input id="amount" name="amount" inputmode="decimal" placeholder="0" autocomplete="off"></div>
+            <div class="field field-full"><label for="payment-note">Payment note</label><textarea id="payment-note" name="note" placeholder="Optional reference" autocomplete="off"></textarea></div>
+          </div><div class="spacer-16"></div><button class="button button-primary" type="button" data-action="payment-not-ready">Continue to secure payment ${icons.arrow}</button><p class="helper-text" style="margin:10px 0 0">The payment button will only be enabled after backend authentication, risk controls, and provider sandbox verification are implemented.</p></form></div></article>
+          <article class="panel"><div class="panel-head"><div><h2 class="panel-title">Expected secure flow</h2><span class="panel-kicker">Server mediated; no provider secrets in browser</span></div></div><div class="panel-body">
+            <div class="flow-step"><span class="step-num">01</span><div><strong>Authenticate &amp; confirm</strong><small>Server creates a one-time WebAuthn challenge for high-risk actions.</small></div></div>
+            <div class="flow-step"><span class="step-num">02</span><div><strong>Create a provider intent</strong><small>Backend validates limits and creates an idempotent sandbox request.</small></div></div>
+            <div class="flow-step"><span class="step-num">03</span><div><strong>Verify provider callback</strong><small>Server verifies the provider signature before recording settlement.</small></div></div>
+            <div class="flow-step"><span class="step-num">04</span><div><strong>Write an auditable ledger entry</strong><small>Balance changes are atomic, attributable, and reversible by policy.</small></div></div>
+            <div class="security-note">Never put payment keys, JWT signing secrets, or database credentials in this frontend or any public source repository.</div>
+          </div></article>
+        </section>`,
+
+      merchants: () => `
+        ${intro("Business network", "Merchants", "Merchant onboarding and approval should be server-authorized and recorded in an audit trail.")}
+        <section class="panel"><div class="panel-head"><div><h2 class="panel-title">Merchant directory</h2><span class="panel-kicker">No merchants are loaded in this preview</span></div><span class="tag">API disconnected</span></div>${emptyState("No merchant records", "Connect an authorized API to load merchant applications. This page contains no seed accounts or invented records.")}</section>
+        <div class="spacer-16"></div><section class="section-grid"><article class="feature-card"><div class="feature-top"><span class="feature-icon">${icons.shield}</span><span class="tag tag-warn">Backend required</span></div><h2>Role-based approval</h2><p>Merchant approval, suspension, and payout changes should be protected by server-side role checks and logged with an actor, timestamp, and reason.</p></article><article class="feature-card"><div class="feature-top"><span class="feature-icon">${icons.store}</span><span class="tag">Not configured</span></div><h2>Merchant verification</h2><p>Define the pilot’s onboarding evidence, verification steps, dispute contact, and retention rules before accepting live merchants.</p></article></section>`,
+
+      devices: () => `
+        ${intro("Device network", "BLE devices", "Keep scanning explicit. The registry is empty until a real BLE source is connected; no nearby devices are invented.")}
+        <div class="notice"><span class="notice-icon" aria-hidden="true">!</span><div><strong>SCANNING IS OFF</strong><p>This preview does not request Bluetooth access, auto-enroll devices, or send discovered device data to a server.</p></div></div>
+        <section class="panel"><div class="panel-head"><div><h2 class="panel-title">Device registry</h2><span class="panel-kicker">When connected, sort by first discovery time — newest first</span></div><span class="tag">No BLE source</span></div><div class="table-wrap"><table><thead><tr><th>Device</th><th>Status</th><th>First discovered</th><th>Last seen</th><th>Signal</th></tr></thead><tbody><tr><td class="empty-cell" colspan="5">No device records loaded. Scanning is not active and no sample devices are displayed.</td></tr></tbody></table></div><div class="panel-body" style="padding-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap"><button class="button button-small" data-action="test-discovery-sound">Test two-tone discovery cue</button><span class="helper-text">Plays a locally generated cue after your tap. It is not connected to BLE discovery yet.</span></div></section>
+        <div class="spacer-16"></div><section class="section-grid"><article class="feature-card"><div class="feature-top"><span class="feature-icon">${icons.bluetooth}</span><span class="tag">Off by default</span></div><h2>Explicit BLE scanning</h2><p>Browser/device support varies. A future scan must start only after a user gesture, explain what is collected, and provide a clear stop control.</p></article><article class="feature-card"><div class="feature-top"><span class="feature-icon">${icons.activity}</span><span class="tag tag-warn">Server policy required</span></div><h2>Enrollment is not automatic</h2><p>Device discovery should not create accounts or attach a device to a person without explicit authorization and a verified server-side policy.</p></article></section>`,
+
+      activity: () => `
+        ${intro("Audit trail", "Activity", "Payment and account events will be shown here once the protected API is connected.")}
+        <section class="panel"><div class="panel-head"><div><h2 class="panel-title">Transaction history</h2><span class="panel-kicker">Authorized records only · no sample data</span></div><span class="tag">No connection</span></div><div class="table-wrap"><table><thead><tr><th>Reference</th><th>Type</th><th>Merchant</th><th>Amount</th><th>Status</th><th>Time</th></tr></thead><tbody><tr><td class="empty-cell" colspan="6">No transaction data available. Nothing has been simulated or sent.</td></tr></tbody></table></div></section>
+        <div class="spacer-16"></div><article class="panel"><div class="panel-head"><div><h2 class="panel-title">Audit events</h2><span class="panel-kicker">Security events are separate from payment history</span></div></div>${emptyState("No audit events loaded", "A production API should provide read-only, access-controlled audit records with pagination and export controls.")}</article>`,
+
+      security: () => `
+        ${intro("Account protection", "Security & biometrics", "Use device-bound authentication for account actions. Keep camera research separate from identity and payment decisions.")}
+        <div class="notice"><span class="notice-icon" aria-hidden="true">i</span><div><strong>THIS PREVIEW DOES NOT CAPTURE BIOMETRICS</strong><p>No camera is opened, no fingerprint is read, and no biometric values are generated or stored here.</p></div></div>
+        <section class="section-grid">
+          <article class="feature-card"><div class="feature-top"><span class="feature-icon">${icons.key}</span><span class="tag tag-warn">API required</span></div><h2>Passkeys / WebAuthn</h2><p>Passkeys can ask the phone’s operating system to verify the person using a fingerprint, face, or device PIN. BioPay receives a cryptographic assertion—not the fingerprint image or template.</p><button class="button button-small" data-action="passkey-not-ready">Set up a passkey</button><div class="detail">A server must generate single-use challenges, verify responses, and store public-key credentials securely before this can work.</div></article>
+          <article class="feature-card"><div class="feature-top"><span class="feature-icon">${icons.pulse}</span><span class="tag">Off by default</span></div><h2>Optional camera research</h2><p>rPPG and eye measurements are experimental measurements, not proof of identity. Any study must be opt-in, separately explained, and validated with real capture only.</p><button class="button button-small" data-action="open-safeguards">Review study safeguards</button><div class="detail">This preview never requests camera permission and does not show synthetic readings.</div></article>
+        </section>
+        <div class="spacer-16"></div><section class="panel"><div class="panel-head"><div><h2 class="panel-title">Pilot safeguards to complete</h2><span class="panel-kicker">Before inviting participants or connecting live money</span></div></div><div class="panel-body"><ul class="check-list">
+          <li><span class="checkmark">•</span><span>Document the purpose, legal basis, participant notice, consent withdrawal, access controls, retention, and deletion process with appropriate Ugandan privacy counsel and the pilot sponsors.</span></li>
+          <li><span class="checkmark">•</span><span>Keep camera research data out of payment authorization, fraud scoring, and account-access decisions unless separately validated and formally approved.</span></li>
+          <li><span class="checkmark">•</span><span>Use TLS, server-side secrets, least privilege, audit logs, backups, incident response, and a tested recovery plan.</span></li>
+          <li><span class="checkmark">•</span><span>Use a payment-provider sandbox first. Reconcile signed callbacks and prevent duplicate charges before considering a live pilot.</span></li>
+        </ul></div></section>`,
+
+      settings: () => `
+        ${intro("Environment", "Settings", "Connect a trusted API in a later phase. The public frontend configuration must contain only a public API origin.")}
+        <section class="panel"><div class="panel-head"><div><h2 class="panel-title">Connection status</h2><span class="panel-kicker">Supabase URL is configured; API route is not connected</span></div><span class="tag tag-warn" id="settings-api-tag">Not connected</span></div><div class="panel-body">
+          <div class="setting-row"><div><strong>Frontend host</strong><p>Vercel can host static files and trusted server-side functions; this pilot currently has no API functions connected.</p></div><span class="tag tag-good">Static-ready</span></div>
+          <div class="setting-row"><div><strong>Supabase project URL</strong><p>Configured for Vercel as <span class="code-chip">SUPABASE_URL</span>: <span class="code-chip">${BIOPAY_CONFIG.supabaseUrl}</span>. No client key, database schema, or data calls are enabled yet.</p></div><span class="tag tag-good">URL configured</span></div>
+          <div class="setting-row"><div><strong>API origin</strong><p>Set <span class="code-chip">BIOPAY_CONFIG.apiBaseUrl</span> when a trusted backend route is implemented. Do not add a trailing slash.</p></div><span class="code-chip">currently empty</span></div>
+          <div class="setting-row"><div><strong>Provider credentials</strong><p>Store these only in backend environment variables or a managed secret store. Do not commit them to source control.</p></div><span class="tag">Not set</span></div>
+          <div class="setting-row"><div><strong>Default mode</strong><p>Sandbox/test mode until an approved payment provider, reconciliation process, and operational controls are ready.</p></div><span class="tag tag-warn">Sandbox first</span></div>
+          <div class="spacer-16"></div><button class="button" data-action="check-api">Test API health</button><span class="helper-text" style="margin-left:10px">Only performs a health check when an API origin is configured.</span>
+        </div></section>
+        <div class="spacer-16"></div><section class="panel"><div class="panel-head"><div><h2 class="panel-title">Build boundary</h2><span class="panel-kicker">Frontend and trusted services are separate components</span></div></div><div class="panel-body"><div class="flow-step"><span class="step-num">UI</span><div><strong>Vercel</strong><small>Hosts the UI and trusted server functions; privileged keys stay server-side.</small></div></div><div class="flow-step"><span class="step-num">API</span><div><strong>Vercel server-side functions</strong><small>Authentication, passkey verification, consent records, ledger, provider secrets, and signed callbacks.</small></div></div><div class="flow-step"><span class="step-num">DB</span><div><strong>Protected storage</strong><small>Access-controlled, encrypted where appropriate, backed up, and governed by retention policy.</small></div></div></div></section>`
+    };
+
+    function showToast(message) {
+      toastEl.textContent = message;
+      toastEl.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastEl.classList.remove("show"), 4200);
+    }
+
+    function currentRoute() {
+      const route = (location.hash || "#overview").slice(1).split("?")[0];
+      return allowedRoutes.has(route) ? route : "overview";
+    }
+
+    function updateConnectionBadge(state = "idle") {
+      const configured = Boolean(BIOPAY_CONFIG.apiBaseUrl && BIOPAY_CONFIG.apiBaseUrl.trim());
+      const label = state === "checking" ? "Checking API…" : state === "online" ? "API reachable" : state === "offline" ? "API unreachable" : configured ? "API configured" : "Backend not connected";
+      apiStatusText.textContent = label;
+      apiPill.querySelector(".status-dot").style.background = state === "online" ? "var(--mint)" : state === "offline" ? "var(--red)" : "var(--amber)";
+      const settingsTag = document.getElementById("settings-api-tag");
+      if (settingsTag) {
+        settingsTag.textContent = state === "online" ? "Reachable" : configured ? (state === "offline" ? "Unreachable" : "Configured") : "Not connected";
+        settingsTag.className = "tag " + (state === "online" ? "tag-good" : "tag-warn");
+      }
+    }
+
+    function render() {
+      const route = currentRoute();
+      main.innerHTML = views[route]();
+      document.querySelectorAll("[data-route]").forEach(button => {
+        if (button.closest("nav")) button.setAttribute("aria-current", button.dataset.route === route ? "page" : "false");
+      });
+      const titles = { overview: "Overview", payments: "Payments", merchants: "Merchants", devices: "BLE devices", activity: "Activity", security: "Security", settings: "Settings" };
+      document.getElementById("current-section").textContent = titles[route];
+      if (route === "overview") {
+        const date = document.getElementById("kampala-date");
+        date.textContent = new Intl.DateTimeFormat("en-UG", { weekday: "long", day: "numeric", month: "long", timeZone: "Africa/Kampala" }).format(new Date()) + " · Kampala";
+      }
+      updateConnectionBadge();
+      main.focus({ preventScroll: true });
+    }
+
+    function openModal() { modalBackdrop.hidden = false; document.querySelector(".modal-close").focus(); }
+    function closeModal() { modalBackdrop.hidden = true; }
+
+    function playDiscoveryBeep() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) { showToast("This browser does not support the discovery audio cue."); return; }
+      try {
+        const context = new AudioContextClass();
+        const startAt = context.currentTime;
+        [880, 1320].forEach((frequency, index) => {
+          const offset = index * 0.13;
+          const oscillator = context.createOscillator();
+          const gain = context.createGain();
+          oscillator.type = "sine";
+          oscillator.frequency.setValueAtTime(frequency, startAt + offset);
+          gain.gain.setValueAtTime(0.0001, startAt + offset);
+          gain.gain.exponentialRampToValueAtTime(0.16, startAt + offset + 0.012);
+          gain.gain.exponentialRampToValueAtTime(0.0001, startAt + offset + 0.11);
+          oscillator.connect(gain); gain.connect(context.destination);
+          oscillator.start(startAt + offset); oscillator.stop(startAt + offset + 0.12);
+        });
+        setTimeout(() => context.close().catch(() => {}), 500);
+      } catch (error) { showToast("Could not play the discovery cue in this browser."); }
+    }
+
+    async function checkApi() {
+      const base = (BIOPAY_CONFIG.apiBaseUrl || "").trim().replace(/\/+$/, "");
+      if (!base) {
+        showToast("No API origin is configured. Nothing was sent. Set the public API origin in BIOPAY_CONFIG when the backend is ready.");
+        return;
+      }
+      updateConnectionBadge("checking");
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5000);
+      try {
+        const response = await fetch(base + "/api/health", { method: "GET", headers: { "Accept": "application/json" }, mode: "cors", signal: controller.signal, cache: "no-store" });
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        updateConnectionBadge("online");
+        showToast("API health check succeeded. No account or payment data was requested.");
+      } catch (error) {
+        updateConnectionBadge("offline");
+        showToast("API health check failed. Confirm the backend URL, HTTPS, CORS, and /api/health route.");
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    document.addEventListener("click", event => {
+      const routeButton = event.target.closest("[data-route]");
+      if (routeButton) {
+        const route = routeButton.dataset.route;
+        if (allowedRoutes.has(route)) {
+          location.hash = route;
+          sidebar.classList.remove("open");
+          menuButton.setAttribute("aria-expanded", "false");
+        }
+        return;
+      }
+      const actionButton = event.target.closest("[data-action]");
+      if (!actionButton) return;
+      switch (actionButton.dataset.action) {
+        case "check-api": checkApi(); break;
+        case "open-safeguards": openModal(); break;
+        case "close-modal": closeModal(); break;
+        case "go-security": closeModal(); location.hash = "security"; break;
+        case "payment-not-ready": showToast("Payment is disabled in this preview. No charge or network request was made."); break;
+        case "passkey-not-ready": showToast("Passkey enrollment needs a secure WebAuthn API. No credential prompt was started."); break;
+        case "test-discovery-sound": playDiscoveryBeep(); break;
+      }
+    });
+
+    menuButton.addEventListener("click", () => {
+      const open = sidebar.classList.toggle("open");
+      menuButton.setAttribute("aria-expanded", String(open));
+    });
+    modalBackdrop.addEventListener("click", event => { if (event.target === modalBackdrop) closeModal(); });
+    document.addEventListener("keydown", event => { if (event.key === "Escape") closeModal(); });
+    window.addEventListener("hashchange", render);
+    render();
+  </script>
+</body>
+</html>
